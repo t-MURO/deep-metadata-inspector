@@ -3,48 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Deep Metadata Inspector (Pure ESM)</title>
+    <title>Deep Metadata Inspector</title>
     <style>
-        :root { --primary: #6c5ce7; --bg: #dfe6e9; --panel: #ffffff; --text: #2d3436; }
-        body { font-family: system-ui, -apple-system, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        /* DARK MODE PALETTE */
+        :root { 
+            --primary: #a29bfe;       /* Soft Purple Accent */
+            --bg: #1e1e2e;            /* Deep Dark Background */
+            --panel: #2b2b40;         /* Card Background */
+            --text: #e0e0e0;          /* Main Text */
+            --subtext: #b0b0cc;       /* Secondary Text */
+            --border: #44475a;        /* Border Color */
+            --highlight: rgba(162, 155, 254, 0.15); /* Row Highlight */
+        }
+
+        body { 
+            font-family: system-ui, -apple-system, sans-serif; 
+            background-color: var(--bg); 
+            color: var(--text); 
+            margin: 0; 
+            padding: 20px; 
+        }
+        
         .container { max-width: 900px; margin: 0 auto; }
         
+        h1 { text-align: center; color: var(--primary); font-weight: 300; letter-spacing: 1px; }
+
         /* Upload Zone */
         .drop-zone {
-            border: 2px dashed #b2bec3; border-radius: 12px; padding: 40px; text-align: center;
-            background: var(--panel); margin-bottom: 30px; cursor: pointer; transition: 0.2s;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 2px dashed var(--border); 
+            border-radius: 12px; 
+            padding: 40px; 
+            text-align: center;
+            background: var(--panel); 
+            margin-bottom: 30px; 
+            cursor: pointer; 
+            transition: all 0.2s ease;
         }
-        .drop-zone:hover { border-color: var(--primary); transform: translateY(-2px); }
-        button { padding: 10px 24px; background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; border-radius: 6px; margin-top: 15px; font-size: 1rem;}
+        .drop-zone:hover { 
+            border-color: var(--primary); 
+            background: #32324a; 
+            transform: translateY(-2px);
+        }
+        .drop-zone p { color: var(--subtext); font-size: 1.1rem; }
         
-        /* Results */
-        .section { background: var(--panel); padding: 25px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); word-wrap: break-word; }
-        h2 { margin-top: 0; border-bottom: 2px solid #f1f2f6; color: var(--primary); font-size: 1.2rem; margin-bottom: 15px; padding-bottom: 10px; }
+        button { 
+            padding: 12px 28px; 
+            background: var(--primary); 
+            color: #1e1e2e; 
+            border: none; 
+            font-weight: bold; 
+            cursor: pointer; 
+            border-radius: 6px; 
+            margin-top: 15px; 
+            font-size: 1rem;
+            transition: opacity 0.2s;
+        }
+        button:hover { opacity: 0.9; }
+        
+        /* Results Section */
+        .section { 
+            background: var(--panel); 
+            padding: 25px; 
+            border-radius: 12px; 
+            margin-bottom: 20px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3); 
+            word-wrap: break-word; 
+            border: 1px solid var(--border);
+        }
+        
+        h2 { 
+            margin-top: 0; 
+            border-bottom: 1px solid var(--border); 
+            color: var(--primary); 
+            font-size: 1.2rem; 
+            margin-bottom: 15px; 
+            padding-bottom: 10px; 
+        }
         
         table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #f1f2f6; vertical-align: top; }
-        th { color: #636e72; width: 30%; font-weight: 600; }
-        td { font-family: 'Consolas', monospace; color: #2d3436; white-space: pre-wrap; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
         
-        .highlight-row { background-color: rgba(108, 92, 231, 0.1); }
-        img.cover-art { max-width: 300px; display: block; margin: 0 auto 20px; border-radius: 10px; box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
-        .error { color: #d63031; text-align: center; margin-top: 10px; padding: 15px; background: #fab1a0; border-radius: 6px; display: none; }
-        .loading { text-align: center; font-style: italic; color: #636e72; margin: 20px; display: none; }
+        th { color: var(--subtext); width: 30%; font-weight: 600; }
+        td { font-family: 'Consolas', monospace; color: var(--text); white-space: pre-wrap; line-height: 1.4; }
+        
+        /* Utility Styles */
+        .highlight-row { background-color: var(--highlight); }
+        
+        img.cover-art { 
+            max-width: 300px; 
+            display: block; 
+            margin: 0 auto 20px; 
+            border-radius: 10px; 
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5); 
+        }
+        
+        .error { 
+            color: #ff6b6b; 
+            text-align: center; 
+            margin-top: 10px; 
+            padding: 15px; 
+            background: rgba(255, 107, 107, 0.1); 
+            border: 1px solid #ff6b6b;
+            border-radius: 6px; 
+            display: none; 
+        }
+        
+        .loading { 
+            text-align: center; 
+            font-style: italic; 
+            color: var(--subtext); 
+            margin: 20px; 
+            display: none; 
+        }
+
+        /* Scrollbar styling for Webkit */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--subtext); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1 style="text-align: center; color: var(--primary);">🎧 Deep Metadata Inspector</h1>
+    <h1>🎧 Deep Metadata Inspector</h1>
 
     <div class="drop-zone" id="dropZone">
-        <p style="font-size: 1.1rem; color: #636e72;">Click to select or drag & drop a file here</p>
+        <p>Click to select or drag & drop a file here</p>
         <input type="file" id="fileInput" accept="audio/*" style="display:none">
         <button onclick="document.getElementById('fileInput').click()">Select Audio File</button>
     </div>
 
-    <div id="loadingMsg" class="loading">Parsing tags (this happens locally)...</div>
+    <div id="loadingMsg" class="loading">Parsing tags...</div>
     <div id="errorMsg" class="error"></div>
 
     <div id="output" style="display: none;">
@@ -76,11 +166,11 @@
     // --- EVENT LISTENERS ---
     fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
     
-    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = '#6c5ce7'; });
-    dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.style.borderColor = '#b2bec3'; });
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = '#a29bfe'; });
+    dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.style.borderColor = '#44475a'; });
     dropZone.addEventListener('drop', (e) => {
         e.preventDefault();
-        dropZone.style.borderColor = '#b2bec3';
+        dropZone.style.borderColor = '#44475a';
         handleFile(e.dataTransfer.files[0]);
     });
 
@@ -94,12 +184,8 @@
         loadingMsg.style.display = 'block';
 
         try {
-            // v10 supports parseBlob natively!
             const metadata = await parseBlob(file);
-            
-            console.log('Parsed Metadata Object:', metadata); // Debugging
             renderData(metadata);
-
             loadingMsg.style.display = 'none';
             output.style.display = 'block';
         } catch (err) {
@@ -124,7 +210,7 @@
             .join('');
         document.getElementById('commonTable').innerHTML = commonHtml;
 
-        // 3. Native Tags (Hidden deep data)
+        // 3. Native Tags
         const nativeContainer = document.getElementById('nativeContainer');
         nativeContainer.innerHTML = '';
 
@@ -132,7 +218,6 @@
             for (const [tagType, tags] of Object.entries(md.native)) {
                 let rows = tags.map(tag => {
                     const idStr = String(tag.id);
-                    // Check for interesting tags to highlight
                     const isImportant = 
                         idStr.includes('MusicBrainz') || 
                         idStr.includes('Rating') || 
@@ -159,7 +244,6 @@
         if (md.common.picture && md.common.picture.length > 0) {
             const pic = md.common.picture[0];
             try {
-                // Convert binary buffer to base64 string
                 const base64 = btoa(
                     new Uint8Array(pic.data).reduce((data, byte) => data + String.fromCharCode(byte), '')
                 );
@@ -172,10 +256,7 @@
 
     function formatValue(val) {
         if (val === null || val === undefined) return '';
-        
-        // Handle Objects
         if (typeof val === 'object') {
-            // Detect Binary Buffers (Uint8Array in v10)
             if (val instanceof Uint8Array || (val.type === 'Buffer')) {
                 const len = val.byteLength || val.length;
                 return `<span style="opacity: 0.6; font-size: 0.85em;">[Binary Data: ${len} bytes]</span>`;
