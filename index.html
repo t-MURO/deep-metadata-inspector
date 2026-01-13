@@ -7,13 +7,13 @@
     <style>
         /* DARK MODE PALETTE */
         :root { 
-            --primary: #a29bfe;       /* Soft Purple Accent */
-            --bg: #1e1e2e;            /* Deep Dark Background */
-            --panel: #2b2b40;         /* Card Background */
-            --text: #e0e0e0;          /* Main Text */
-            --subtext: #b0b0cc;       /* Secondary Text */
-            --border: #44475a;        /* Border Color */
-            --highlight: rgba(162, 155, 254, 0.15); /* Row Highlight */
+            --primary: #a29bfe;       
+            --bg: #1e1e2e;            
+            --panel: #2b2b40;         
+            --text: #e0e0e0;          
+            --subtext: #b0b0cc;       
+            --border: #44475a;        
+            --highlight: rgba(162, 155, 254, 0.15); 
         }
 
         body { 
@@ -60,7 +60,49 @@
         }
         button:hover { opacity: 0.9; }
         
-        /* Results Section */
+        /* --- UPDATED BRIGHT PLAYER CSS --- */
+        .media-controls {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        img.cover-art { 
+            max-width: 300px; 
+            max-height: 300px;
+            display: block; 
+            margin: 0 auto 20px; 
+            border-radius: 10px; 
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5); 
+            object-fit: cover;
+        }
+
+        audio {
+            width: 100%;
+            max-width: 500px;
+            margin-top: 10px;
+            border-radius: 30px;
+            /* Add a glow to make it stand out */
+            box-shadow: 0 0 15px rgba(162, 155, 254, 0.3);
+        }
+
+        /* Force the native player panel to be bright white/gray */
+        audio::-webkit-media-controls-panel { 
+            background-color: #f1f2f6; 
+        }
+        
+        /* Ensure the native icons/text (play button, time) are dark to contrast with the white background */
+        audio::-webkit-media-controls-play-button,
+        audio::-webkit-media-controls-volume-slider,
+        audio::-webkit-media-controls-mute-button,
+        audio::-webkit-media-controls-timeline,
+        audio::-webkit-media-controls-current-time-display,
+        audio::-webkit-media-controls-time-remaining-display {
+            filter: invert(0); /* Ensure they are black */
+            color: #1e1e2e;
+        }
+        /* -------------------------------- */
+
+        /* Results Tables */
         .section { 
             background: var(--panel); 
             padding: 25px; 
@@ -86,16 +128,7 @@
         th { color: var(--subtext); width: 30%; font-weight: 600; }
         td { font-family: 'Consolas', monospace; color: var(--text); white-space: pre-wrap; line-height: 1.4; }
         
-        /* Utility Styles */
         .highlight-row { background-color: var(--highlight); }
-        
-        img.cover-art { 
-            max-width: 300px; 
-            display: block; 
-            margin: 0 auto 20px; 
-            border-radius: 10px; 
-            box-shadow: 0 8px 25px rgba(0,0,0,0.5); 
-        }
         
         .error { 
             color: #ff6b6b; 
@@ -115,12 +148,6 @@
             margin: 20px; 
             display: none; 
         }
-
-        /* Scrollbar styling for Webkit */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: var(--bg); }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--subtext); }
     </style>
 </head>
 <body>
@@ -138,7 +165,11 @@
     <div id="errorMsg" class="error"></div>
 
     <div id="output" style="display: none;">
-        <div id="artContainer" style="text-align: center;"></div>
+        
+        <div class="media-controls">
+            <div id="artContainer"></div>
+            <audio id="audioPlayer" controls controlsList="nodownload"></audio>
+        </div>
 
         <div class="section">
             <h2>📊 Technical Format</h2>
@@ -162,6 +193,9 @@
     const output = document.getElementById('output');
     const errorMsg = document.getElementById('errorMsg');
     const loadingMsg = document.getElementById('loadingMsg');
+    const audioPlayer = document.getElementById('audioPlayer');
+
+    let currentObjectUrl = null;
 
     // --- EVENT LISTENERS ---
     fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
@@ -178,14 +212,20 @@
     async function handleFile(file) {
         if (!file) return;
 
-        // Reset UI
         output.style.display = 'none';
         errorMsg.style.display = 'none';
         loadingMsg.style.display = 'block';
 
+        // Setup Player
+        if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
+        currentObjectUrl = URL.createObjectURL(file);
+        audioPlayer.src = currentObjectUrl;
+        audioPlayer.load();
+
         try {
             const metadata = await parseBlob(file);
             renderData(metadata);
+            
             loadingMsg.style.display = 'none';
             output.style.display = 'block';
         } catch (err) {
@@ -197,20 +237,20 @@
     }
 
     function renderData(md) {
-        // 1. Technical Format
+        // Format
         const formatHtml = Object.entries(md.format)
             .map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`)
             .join('');
         document.getElementById('formatTable').innerHTML = formatHtml;
 
-        // 2. Common Tags (filtered)
+        // Common Tags
         const commonHtml = Object.entries(md.common)
             .filter(([k]) => k !== 'picture') 
             .map(([k, v]) => `<tr><th>${k}</th><td>${formatValue(v)}</td></tr>`)
             .join('');
         document.getElementById('commonTable').innerHTML = commonHtml;
 
-        // 3. Native Tags
+        // Native Tags
         const nativeContainer = document.getElementById('nativeContainer');
         nativeContainer.innerHTML = '';
 
@@ -238,7 +278,7 @@
             }
         }
 
-        // 4. Album Art
+        // Album Art
         const artContainer = document.getElementById('artContainer');
         artContainer.innerHTML = '';
         if (md.common.picture && md.common.picture.length > 0) {
@@ -251,6 +291,9 @@
             } catch (e) {
                 console.warn('Failed to render image', e);
             }
+        } else {
+            // Placeholder
+            artContainer.innerHTML = `<div style="width: 150px; height: 150px; background: #2b2b40; margin: 0 auto 20px; border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 2px dashed #44475a; color: #666;">No Art</div>`;
         }
     }
 
